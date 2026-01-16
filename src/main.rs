@@ -24,6 +24,14 @@ fn to_screen(x: usize, y: usize, cam: (f32, f32)) -> (f32, f32) {
     )
 }
 
+fn to_tile(sx: f32, sy: f32, cam: (f32, f32)) -> (usize, usize) {
+    let (ax, ay) = (sx - cam.0, sy - cam.1);
+    (
+        ((ax / T_SIZE.0 + ay / T_SIZE.1) / 2.) as usize,
+        ((ay / T_SIZE.1 - ax / T_SIZE.0) / 2.) as usize,
+    )
+}
+
 //draw hero and monsters
 fn draw_stickman(x: usize, y: usize, cam: (f32, f32)) {
     let (sx, mut sy) = to_screen(x, y, cam);
@@ -85,6 +93,7 @@ struct Game {
     cam: (f32, f32),
     px: usize,
     py: usize,
+    target: Option<(usize, usize)>,
 }
 
 impl Game {
@@ -108,6 +117,7 @@ impl Game {
             cam: (screen_width() / 2., 50.),
             px: 2,
             py: 2,
+            target: None,
         }
     }
 
@@ -115,6 +125,17 @@ impl Game {
         //fake gaming logic
         if is_key_pressed(KeyCode::Space) {
             return true;
+        }
+
+        //mouse input logic
+        if is_mouse_button_pressed(MouseButton::Left) {
+            let (mx, my) = mouse_position();
+            let (tx, ty) = to_tile(mx, my, self.cam);
+
+            //check if the click is inside the map bounds
+            if tx < MAP && ty < MAP {
+                self.target = Some((tx, ty));
+            }
         }
         false
     }
@@ -129,6 +150,12 @@ impl Game {
                     draw_circle(sx, sy + 16., 2., LIGHTGRAY);
                 }
             }
+        }
+
+        //draw the target
+        if let Some((tx, ty)) = self.target {
+            let (sx, sy) = to_screen(tx, ty, self.cam);
+            draw_circle(sx, sy + 16., 6., RED);
         }
 
         //draw the player
