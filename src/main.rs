@@ -17,6 +17,14 @@ enum Tile {
     Floor,
 }
 
+//Monsters
+struct Monster {
+    x: usize,
+    y: usize,
+    hp: i32,
+    cd: i32,
+}
+
 //Math Helper
 fn to_screen(x: usize, y: usize, cam: (f32, f32)) -> (f32, f32) {
     (
@@ -73,7 +81,7 @@ fn bfs(
 }
 
 //draw hero and monsters
-fn draw_stickman(x: usize, y: usize, cam: (f32, f32)) {
+fn draw_stickman(x: usize, y: usize, cam: (f32, f32), enemy: bool) {
     let (sx, mut sy) = to_screen(x, y, cam);
     sy += 16.;
 
@@ -81,7 +89,14 @@ fn draw_stickman(x: usize, y: usize, cam: (f32, f32)) {
     draw_ellipse(sx, sy + 3., 10., 5., 0., Color::new(0., 0., 0., 0.2));
 
     //head
-    draw_circle_lines(sx, sy - 32., 7., 2., BLACK);
+    if enemy {
+        draw_line(sx - 5., sy - 32., sx, sy - 30., 2., BLACK);
+        draw_line(sx + 5., sy - 32., sx, sy - 30., 2., BLACK);
+    } else {
+        //player
+        draw_circle_lines(sx, sy - 32., 7., 2., BLACK);
+    }
+
 
     //body and limbs
     for l in [
@@ -135,6 +150,7 @@ struct Game {
     py: usize,
     path: Vec<(usize, usize)>,
     player_cd: f32,
+    monsters: Vec<Monster>,
 }
 
 impl Game {
@@ -160,6 +176,11 @@ impl Game {
             py: 2,
             path: vec![],
             player_cd: 0.,
+            monsters: vec![
+                Monster {x: 8, y:8, hp: 30, cd: 0},
+                Monster {x: 12, y:4, hp: 30, cd: 0},
+                Monster {x: 15, y:12, hp: 30, cd: 0},
+            ]
         }
     }
 
@@ -219,7 +240,13 @@ impl Game {
         }
 
         //draw the player
-        draw_stickman(self.px, self.py, self.cam);
+        draw_stickman(self.px, self.py, self.cam, false);
+
+        //draw monsters
+        for m in &self.monsters {
+            draw_stickman(m.x, m.y, self.cam, true);
+        }
+
     }
 }
 
