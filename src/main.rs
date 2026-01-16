@@ -24,6 +24,29 @@ fn to_screen(x: usize, y: usize, cam: (f32, f32)) -> (f32, f32) {
     )
 }
 
+//draw hero and monsters
+fn draw_stickman(x: usize, y: usize, cam: (f32, f32)) {
+    let (sx, mut sy) = to_screen(x, y, cam);
+    sy += 16.;
+
+    //shadow
+    draw_ellipse(sx, sy + 3., 10., 5., 0., Color::new(0., 0., 0., 0.2));
+
+    //head
+    draw_circle_lines(sx, sy - 32., 7., 2., BLACK);
+
+    //body and limbs
+    for l in [
+        [0., -25., 0., -8.],
+        [0., -20., -8., -15.],
+        [0., -20., 8., -15.],
+        [0., -8., -6., 0.],
+        [0., -8., 6., 0.],
+    ] {
+        draw_line(sx + l[0], sy + l[1], sx + l[2], sy + l[3], 2., BLACK);
+    }
+}
+
 fn draw_wall(x: usize, y: usize, cam: (f32, f32)) {
     let (sx, sy) = to_screen(x, y, cam);
 
@@ -58,29 +81,33 @@ fn draw_wall(x: usize, y: usize, cam: (f32, f32)) {
 }
 
 struct Game {
-    map: [[Tile;MAP];MAP],
-    cam: (f32, f32)
+    map: [[Tile; MAP]; MAP],
+    cam: (f32, f32),
+    px: usize,
+    py: usize,
 }
 
 impl Game {
     fn new() -> Self {
-        let mut map = [[Tile::Floor;MAP];MAP];
+        let mut map = [[Tile::Floor; MAP]; MAP];
 
         for i in 0..MAP {
             map[0][i] = Tile::Wall;
-            map[MAP -1][i] = Tile::Wall;
+            map[MAP - 1][i] = Tile::Wall;
             map[i][0] = Tile::Wall;
-            map[i][MAP -1] = Tile::Wall;
+            map[i][MAP - 1] = Tile::Wall;
         }
 
         //add obstacles
-        for (x, y) in [(5,5), (6,5), (12,10)] {
+        for (x, y) in [(5, 5), (6, 5), (12, 10)] {
             map[y][x] = Tile::Wall;
         }
 
         Game {
             map,
-            cam: (screen_width() /2., 50.)
+            cam: (screen_width() / 2., 50.),
+            px: 2,
+            py: 2,
         }
     }
 
@@ -95,7 +122,7 @@ impl Game {
     fn draw(&self) {
         for y in 0..MAP {
             for x in 0..MAP {
-                if self.map[y][x] == Tile::Wall{
+                if self.map[y][x] == Tile::Wall {
                     draw_wall(x, y, self.cam);
                 } else {
                     let (sx, sy) = to_screen(x, y, self.cam);
@@ -103,6 +130,9 @@ impl Game {
                 }
             }
         }
+
+        //draw the player
+        draw_stickman(self.px, self.py, self.cam);
     }
 }
 
